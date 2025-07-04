@@ -1,0 +1,196 @@
+✅ 1. Copy the .pem file to your EC2 instance (if needed)
+Use scp to securely copy the key from local to EC2 instance:
+
+----in your project directory --
+scp -i your-local-key.pem your-local-key.pem ubuntu@<EC2-IP>:/home/ubuntu/
+Replace your-local-key.pem and <EC2-IP> accordingly.
+
+⚠️ 2. Check permissions of the copied key
+Once inside the EC2 instance, check file permissions:
+
+
+ls -l /home/ubuntu/your-key.pem
+Example output:
+
+
+-rw-r--r-- 1 ubuntu ubuntu 3243 Jul 3 11:04 your-key.pem
+This shows it's readable by others — not secure!
+
+🔧 3. Fix the file permissions
+Run the following command to restrict permissions:
+
+
+chmod 400 /home/ubuntu/your-key.pem
+This changes the permissions to:
+
+-r-------- 1 ubuntu ubuntu ...
+This makes the key readable only by the owner (ubuntu).
+
+🧪 4. Verify it’s fixed
+Use ls -l again:
+
+
+ls -l /home/ubuntu/your-key.pem
+Make sure the output starts with -r--------.
+
+🗝️ 5. Use the key for SSH or Ansible
+Now you can use the .pem key securely to connect to other instances:
+
+ssh -i /home/ubuntu/your-key.pem ubuntu@<target-ec2-ip>
+Or use it in Ansible inventory like:
+
+ec2-XX-XX-XX-XX.compute-1.amazonaws.com ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/your-key.pem
+
+
+
+-------------  run ansible from vs code to ec2 -----------------
+
+Step 1: Transfer Files to EC2 Instance
+Use scp (secure copy) to transfer the folder or files to your control EC2 node.
+
+Assuming your directory is named ansible-jenkins-setup, run from VS Code terminal:
+
+bash
+Copy
+Edit
+scp -i reactdevops-key.pem -r ./ansible-jenkins-setup ubuntu@<control-node-public-ip>:/home/ubuntu/
+Replace <control-node-public-ip> with your EC2's public IP.
+
+This will copy both:
+
+inventory
+
+install_jenkins.yml
+
+💻 Step 2: SSH into the EC2 Control Node
+bash
+Copy
+Edit
+ssh -i reactdevops-key.pem ubuntu@<control-node-public-ip>
+Then go into the directory:
+
+bash
+Copy
+Edit
+cd ~/ansible-jenkins-setup
+🧪 Step 3: Verify File Structure on EC2
+Ensure both files are there:
+
+bash
+Copy
+Edit
+ls
+You should see:
+
+nginx
+Copy
+Edit
+inventory
+install_jenkins.yml
+🚀 Step 4: Run the Ansible Playbook
+From inside the /home/ubuntu/ansible-jenkins-setup directory, run:
+
+bash
+Copy
+Edit
+ansible-playbook -i inventory install_jenkins.yml
+🔓 Step 5: Access Jenkins
+Get your target EC2 instance public IP.
+
+Go to:
+
+cpp
+Copy
+Edit
+http://<target-ec2-public-ip>:8080
+Get the initial password:
+
+bash
+Copy
+Edit
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+
+
+-----------
+
+✅ Step-by-Step CI/CD Pipeline with Jenkins, Docker, and EKS
+🔧 1. Pre-Requisites (One-Time Setup)
+🔹 On AWS:
+✅ EKS cluster already running (if not, create one with eksctl or terraform)
+
+✅ IAM role with access to EKS and ECR
+
+✅ ECR repository created (e.g., react-devops-app)
+
+✅ Node group or Fargate profile in EKS to run pods
+
+🔹 On Jenkins (EC2 Instance):
+✅ Docker installed and jenkins user added to docker group
+
+✅ kubectl and awscli installed
+
+✅ eksctl configured (optional for setup)
+
+✅ GitHub Webhook access allowed (open port 8080 in security group)
+
+✅ Your repo connected to Jenkins via Git
+
+
+
+
+-------------------------------------------------------------
+
+STEP 1: Install Docker, Git, kubectl, eksctl in Jenkins EC2
+SSH into Jenkins EC2 and install required tools:
+
+bash
+
+sudo apt update
+sudo apt install -y docker.io git curl unzip
+sudo usermod -aG docker jenkins
+sudo systemctl restart docker
+
+# Install kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+# Install eksctl
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz
+sudo mv eksctl /usr/local/bin/
+Then restart Jenkins:
+
+bash
+
+sudo systemctl restart jenkins
+
+
+---------------------------------------------------------------
+
+STEP 2: Connect GitHub to Jenkins (Webhook)
+In Jenkins:
+
+Go to Manage Jenkins → Plugins → Install:
+
+GitHub Integration
+
+Pipeline
+
+Docker
+
+Kubernetes CLI
+
+Go to Manage Jenkins → Configure System → GitHub → Add GitHub server.
+
+In Credentials, use your GitHub PAT (Personal Access Token).
+
+In GitHub repo:
+
+Go to Settings → Webhooks → Add Webhook
+
+Payload URL: http://<jenkins-ec2-public-ip>:8080/github-webhook/
+
+Content type: application/json
+
+Trigger: push events

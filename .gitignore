@@ -1,0 +1,53 @@
+# Node modules
+node_modules/
+
+# Build output
+build/
+dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# dotenv environment files
+.env
+.env.*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# VS Code settings
+.vscode/
+
+# Ansible secrets or temporary files
+ansible/*.retry
+ansible/secrets.yml
+
+# Terraform sensitive files
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/.terraform/
+terraform/crash.log
+terraform/terraform.tfvars
+
+# SSH keys
+*.pem
+*.key
+
+# Docker artifacts
+.dockerignore
+docker-compose.override.yml
+
+# Kubernetes specific
+manifest/.DS_Store
+
+# Dependency lock from package managers (optional)
+# package-lock.json
+# yarn.lock
+
+ansible/
+terraform/
+notes.txt/
+manifests/
