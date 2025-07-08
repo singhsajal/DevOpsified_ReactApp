@@ -62,14 +62,15 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'your-dockerhub-username/devopsified-reactapp'
+        DOCKER_IMAGE = 'singhsajal/devopsified-reactapp'
         DOCKER_TAG = 'latest'
     }
 
     stages {
-        stage('Clone Repo') {
+
+        stage('Checkout Code') {
             steps {
-                echo "Cloning the repo..."
+                echo '🔍 Cloning repository...'
                 checkout scm
             }
         }
@@ -77,31 +78,43 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo "Building Docker image..."
+                    echo "🐳 Building Docker image ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                 }
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Login to DockerHub') {
             steps {
                 script {
-                    echo "Pushing Docker image to Docker Hub..."
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    echo "🔐 Logging into Docker Hub..."
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-singhsajal', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                        sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     }
                 }
             }
         }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    echo "🚀 Pushing image to Docker Hub..."
+                    sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                }
+            }
+        }
+
     }
 
     post {
-        failure {
-            echo "❌ Build failed"
-        }
         success {
-            echo "✅ Docker image pushed successfully!"
+            echo "✅ Build completed and image pushed: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+        }
+        failure {
+            echo "❌ Build failed. Check console output for errors."
+        }
+        always {
+            echo "📋 Pipeline finished at: ${new Date()}"
         }
     }
 }
