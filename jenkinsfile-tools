@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    environment {
+        ANSIBLE_HOST_KEY_CHECKING = 'False'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Tools via Ansible') {
+            steps {
+                script {
+                    sh '''
+                        cd ansible
+                        ansible-playbook -i inventory install_tools.yml
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Tools installed successfully on Jenkins EC2"
+        }
+        failure {
+            echo "❌ Ansible installation failed"
+        }
+    }
+}
