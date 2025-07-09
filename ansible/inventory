@@ -1,2 +1,2 @@
 [jenkins_server]
-18.212.81.14 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/reactdevops-key.pem
+54.147.27.254 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/reactdevops-key.pem
